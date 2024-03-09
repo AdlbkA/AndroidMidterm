@@ -8,7 +8,12 @@ import android.view.ViewGroup
 import com.example.aviatickets.R
 import com.example.aviatickets.adapter.OfferListAdapter
 import com.example.aviatickets.databinding.FragmentOfferListBinding
+import com.example.aviatickets.model.entity.Offer
+import com.example.aviatickets.model.network.ApiClient
 import com.example.aviatickets.model.service.FakeService
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 
 class OfferListFragment : Fragment() {
@@ -32,12 +37,39 @@ class OfferListFragment : Fragment() {
         _binding = FragmentOfferListBinding.inflate(layoutInflater, container, false)
         return _binding?.root
     }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         setupUI()
         adapter.setItems(FakeService.offerList)
+
+        val client = ApiClient.instance
+        val response = client.fetchOfferList()
+
+        response.enqueue(object : Callback<List<Offer>>{
+            override fun onResponse(call: Call<List<Offer>>, response: Response<List<Offer>>) {
+                if(response.isSuccessful){
+                    val list = response.body()
+                    if(list != null) {
+                        adapter.setItems(
+                            offerList = ArrayList(
+                                list.map{
+                                    Offer.toOffer(it)
+                                }
+                            )
+                        )
+                    }
+
+                }
+
+
+            }
+
+            override fun onFailure(call: Call<List<Offer>>, t: Throwable) {
+                println("HttpResponse: ${t.message}")
+            }
+
+        })
     }
 
     private fun setupUI() {
@@ -47,15 +79,13 @@ class OfferListFragment : Fragment() {
             sortRadioGroup.setOnCheckedChangeListener { _, checkedId ->
                 when (checkedId) {
                     R.id.sort_by_price -> {
-                        /**
-                         * implement sorting by price
-                         */
+                        adapter.updateItems(FakeService.offerList.sortedBy { it.price })
+
                     }
 
                     R.id.sort_by_duration -> {
-                        /**
-                         * implement sorting by duration
-                         */
+                        adapter.updateItems(FakeService.offerList.sortedBy { it.flight.duration })
+
                     }
                 }
             }

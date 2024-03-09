@@ -1,11 +1,14 @@
 package com.example.aviatickets.adapter
 
+import OfferDiffCallback
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.aviatickets.R
 import com.example.aviatickets.databinding.ItemOfferBinding
 import com.example.aviatickets.model.entity.Offer
+import com.example.aviatickets.model.service.FakeService
 
 class OfferListAdapter : RecyclerView.Adapter<OfferListAdapter.ViewHolder>() {
 
@@ -38,6 +41,15 @@ class OfferListAdapter : RecyclerView.Adapter<OfferListAdapter.ViewHolder>() {
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(items[position])
     }
+
+    fun updateItems(newItems: List<Offer>) {
+        val diffCallback = OfferDiffCallback(items, newItems)
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        items.clear()
+        items.addAll(newItems)
+        diffResult.dispatchUpdatesTo(this)
+    }
+
 
     inner class ViewHolder(
         private val binding: ItemOfferBinding
